@@ -65,7 +65,7 @@ app.post("/create-animal", upload.single("photo"), Cleanup,  async (req,res)=>{
 
 app.delete("animal/:id", async (req,res)=>{
     if(typeof req.params.id != "string") req.params.id = "";
-    const doc = db.collection("animals").findOne({id: new ObjectId(req.params.id)})
+    const doc = db.collection("animals").findOne({_id: new ObjectId(req.params.id)})
     if (doc.photo){
         fse.remove( path.join("public","uploaded-photos", doc.photo) )
     }
@@ -105,4 +105,4 @@ startdb();
 
 
 
-app.listen(3001);
+app.listen(3000);
