@@ -5,7 +5,7 @@ function AnimalCard(props) {
   const [isEditing, setIsEditing] = useState(false)
   const [draftName, setDraftName] = useState("")
   const [file, setFile] = useState()
-  const [draftAnimaltype, setDraftAnimaltype] = useState("")
+  const [draftSpecies, setDraftSpecies] = useState("")
 
   async function submitHandler(e) {
     e.preventDefault()
@@ -13,7 +13,7 @@ function AnimalCard(props) {
     props.setAnimals(prev =>
       prev.map(function (animal) {
         if (animal._id == props.id) {
-          return { ...animal, name: draftName, animaltype: draftAnimaltype }
+          return { ...animal, name: draftName, species: draftSpecies }
         }
         return animal
       })
@@ -24,7 +24,7 @@ function AnimalCard(props) {
     }
     data.append("_id", props.id)
     data.append("name", draftName)
-    data.append("animaltype", draftAnimaltype)
+    data.append("species", draftSpecies)
     const newPhoto = await Axios.post("/update-animal", data, { headers: { "Content-Type": "multipart/form-data" } })
     if (newPhoto.data) {
       props.setAnimals(prev => {
@@ -48,20 +48,20 @@ function AnimalCard(props) {
             </div>
           </div>
         )}
-        <img src={props.photo ? `/uploaded-photos/${props.photo}` : "/fallback.png"} className="card-img-top" alt={`${props.animaltype} named ${props.name}`} />
+        <img src={props.photo ? `/uploaded-photos/${props.photo}` : "/fallback.png"} className="card-img-top" alt={`${props.species} named ${props.name}`} />
       </div>
       <div className="card-body">
         {!isEditing && (
           <>
             <h4>{props.name}</h4>
-            <p className="text-muted small">{props.animaltype}</p>
+            <p className="text-muted small">{props.species}</p>
             {!props.readOnly && (
               <>
                 <button
                   onClick={() => {
                     setIsEditing(true)
                     setDraftName(props.name)
-                    setDraftAnimaltype(props.animaltype)
+                    setDraftSpecies(props.species)
                     setFile("")
                   }}
                   className="btn btn-sm btn-primary"
@@ -91,7 +91,7 @@ function AnimalCard(props) {
               <input autoFocus onChange={e => setDraftName(e.target.value)} type="text" className="form-control form-control-sm" value={draftName} />
             </div>
             <div className="mb-2">
-              <input onChange={e => setDraftAnimaltype(e.target.value)} type="text" className="form-control form-control-sm" value={draftAnimaltype} />
+              <input onChange={e => setDraftSpecies(e.target.value)} type="text" className="form-control form-control-sm" value={draftSpecies} />
             </div>
             <button className="btn btn-sm btn-success">Save</button>{" "}
             <button onClick={() => setIsEditing(false)} className="btn btn-sm btn-outline-secondary">
