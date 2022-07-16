@@ -16,9 +16,9 @@ const sharp = require('sharp'); //image resizing tool
 
 
 //Server Side React Rendering 
-// const React = require("react")
-// const ReactDOMServer = require("react-dom/server")
-// const AnimalCard = require("./src/components/AnimalCard").default
+const React = require("react")
+const ReactDOMServer = require("react-dom/server")
+const AnimalCard = require("./src/components/AnimalCard").default // Using modern ES6 format, so default is used to import in common JS
 
 
 //When the app launches, make an folder public/uploaded-photos exists
@@ -49,7 +49,21 @@ function passwordProtected(req, res, next) {
 //Route for root page
 app.get("/", async (req, res) => {
     const allAnimals = await db.collection("animals").find().toArray();
-    res.render("home", { allAnimals });
+    const generatedHTML = ReactDOMServer.renderToString(
+        <div className='container'>
+            <h1> Welcome to the Zoo </h1>
+            {!allAnimals.length && <p>There are no animals yet, the admin needs to add a few.</p>}
+            <div className='animal-grid mb-3'>
+                {allAnimals.map(animal => (
+                    <AnimalCard key={animal._id} name={animal.name} species={animal.species} photo={animal.photo} id={animal._id} readOnly={true} />
+                ))}
+            </div>
+            <p>
+                <a href="/admin">Login / manage the animal listings.</a>
+            </p>
+        </div>
+    )
+    res.render("home", {generatedHTML});
     // (template as first argument, and objects as second template)
 })
 
@@ -82,34 +96,34 @@ app.post("/create-animal", upload.single("photo"), Cleanup, async (req, res) => 
     res.send(newAnimal);
 })
 
-    app.delete("/animal/:id", async (req, res) => {
-        if (typeof req.params.id != "string") req.params.id = "";
-        const doc = db.collection("animals").findOne({ _id: new ObjectId(req.params.id) })
-        if (doc.photo) {
-            fse.remove(path.join("public", "uploaded-photos", doc.photo))
-        }
-        db.collection("animals").deleteOne({ _id: new ObjectId(req.params.id) })
-        res.send("Good Job");
-    })
+app.delete("/animal/:id", async (req, res) => {
+    if (typeof req.params.id != "string") req.params.id = "";
+    const doc = db.collection("animals").findOne({ _id: new ObjectId(req.params.id) })
+    if (doc.photo) {
+        fse.remove(path.join("public", "uploaded-photos", doc.photo))
+    }
+    db.collection("animals").deleteOne({ _id: new ObjectId(req.params.id) })
+    res.send("Good Job");
+})
 
 app.post("/update-animal", upload.single("photo"), Cleanup, async (req, res) => {
-  if (req.file) {
-    // if they are uploading a new photo
-    const photofilename = `${Date.now()}.jpg`
-    await sharp(req.file.buffer).resize(844, 456).jpeg({ quality: 60 }).toFile(path.join("public", "uploaded-photos", photofilename))
-    req.cleanData.photo = photofilename
-    const info = await db.collection("animals").findOneAndUpdate({ _id: new ObjectId(req.body._id) }, { $set: req.cleanData })
-    if (info.value.photo) {
-      fse.remove(path.join("public", "uploaded-photos", info.value.photo))
+    if (req.file) {
+        // if they are uploading a new photo
+        const photofilename = `${Date.now()}.jpg`
+        await sharp(req.file.buffer).resize(844, 456).jpeg({ quality: 60 }).toFile(path.join("public", "uploaded-photos", photofilename))
+        req.cleanData.photo = photofilename
+        const info = await db.collection("animals").findOneAndUpdate({ _id: new ObjectId(req.body._id) }, { $set: req.cleanData })
+        if (info.value.photo) {
+            fse.remove(path.join("public", "uploaded-photos", info.value.photo))
+        }
+        res.send(photofilename)
+    } else {
+        // if they are not uploading a new photo
+        db.collection("animals").findOneAndUpdate({ _id: new ObjectId(req.body._id) }, { $set: req.cleanData })
+        res.send(false)
     }
-    res.send(photofilename)
-  } else {
-    // if they are not uploading a new photo
-    db.collection("animals").findOneAndUpdate({ _id: new ObjectId(req.body._id) }, { $set: req.cleanData })
-    res.send(false)
-  }
 })
-    
+
 
 function Cleanup(req, res, next) {
     if (typeof req.body.name != "string") req.body.name = ""
